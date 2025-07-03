@@ -1289,15 +1289,73 @@ The Trinity Capital Team
   // Privacy Policy endpoint
   app.get("/privacy-policy", (req, res) => {
     res.send(`
-    <html>
-      <head>
-        <title>Privacy Policy - Trinity Capital</title>
-      </head>
-      <body>
-        <h1>Privacy Policy</h1>
-        <p>This is the Privacy Policy for Trinity Capital. Please update this content with your actual privacy policy details.</p>
-      </body>
-    </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - [Your App Name]</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
+    h1, h2 { color: #2c3e50; }
+    p { margin-bottom: 15px; }
+    ul { margin-left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p>Last Updated: [Insert Date]</p>
+
+  <h2>1. Introduction</h2>
+  <p>This Privacy Policy describes how [Your Company Name] ("we," "our," or "us") collects, uses, and protects personal information in connection with our financial literacy application ("the App").</p>
+
+  <h2>2. Information We Collect</h2>
+  <ul>
+    <li><strong>Account Information:</strong> Name, email address, school affiliation, and role.</li>
+    <li><strong>Usage Data:</strong> Pages visited, features used, time spent on the App, and performance logs.</li>
+    <li><strong>Communication Data:</strong> Emails sent via the App, subject lines, recipients, and delivery metadata.</li>
+    <li><strong>Student Data (if applicable):</strong> Only minimal information needed to support lesson delivery and reporting features.</li>
+  </ul>
+
+  <h2>3. How We Use Your Information</h2>
+  <ul>
+    <li>To provide and improve the App experience.</li>
+    <li>To support communication between educators, parents, and staff.</li>
+    <li>To respond to user inquiries and provide technical support.</li>
+    <li>To meet legal and educational compliance standards (e.g., FERPA).</li>
+  </ul>
+
+  <h2>4. Sharing and Disclosure</h2>
+  <p>We do not sell personal data. Information is shared only under these circumstances:</p>
+  <ul>
+    <li>With your school or district for administrative purposes.</li>
+    <li>With trusted service providers that help us operate the App (e.g., cloud hosting, email services).</li>
+    <li>As required by law or to protect rights and safety.</li>
+  </ul>
+
+  <h2>5. Data Retention</h2>
+  <p>We retain data only as long as necessary to provide the service or as required by law. Users may request deletion of their account and associated data at any time.</p>
+
+  <h2>6. Security</h2>
+  <p>We implement industry-standard safeguards to protect data from unauthorized access, loss, misuse, or alteration. However, no method is 100% secure.</p>
+
+  <h2>7. Student Data and FERPA Compliance</h2>
+  <p>We comply with the Family Educational Rights and Privacy Act (FERPA). Student data is handled only for legitimate educational purposes and never for commercial gain.</p>
+
+  <h2>8. Your Choices</h2>
+  <ul>
+    <li>You may review, update, or delete your personal information at any time by contacting us.</li>
+    <li>You may opt out of non-essential communications through your account settings.</li>
+  </ul>
+
+  <h2>9. Changes to This Privacy Policy</h2>
+  <p>We may update this policy periodically. Continued use of the App after changes are posted constitutes your acceptance of the revised terms.</p>
+
+  <h2>10. Contact Us</h2>
+  <p>If you have any questions or concerns about this Privacy Policy, please contact us at [Insert Contact Email or Address].</p>
+
+</body>
+</html>
   `);
   })
 );
@@ -1310,7 +1368,7 @@ app.get("/terms-of-service", (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terms of Service - Trintiy Capital</title>
+  <title>Terms of Service - [Your App Name]</title>
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
     h1, h2 { color: #2c3e50; }
@@ -1320,22 +1378,22 @@ app.get("/terms-of-service", (req, res) => {
 </head>
 <body>
   <h1>Terms of Service</h1>
-  <p>Last Updated: [Insert Date]</p>
+  <p>Last Updated: 07/03/2025</p>
 
   <h2>1. Acceptance of Terms</h2>
-  <p>By accessing and using our financial literacy application ("Trinity Capital"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not use the App.</p>
+  <p>By accessing and using our financial literacy application ("the App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not use the App.</p>
 
   <h2>2. Description of the App</h2>
   <p>The App is designed to provide financial literacy resources to students and educators. It includes lesson planning tools, email communication features, reporting tools, and more.</p>
 
   <h2>3. Eligibility</h2>
-  <p>Use of the App is limited to authorized school personnel, educators, and administrators. Users must be 18 years of age or older or have legal authority to act on behalf of their school.</p>
+  <p>Use of the App is limited to authorized school personnel, educators, and administrators who must be 18 years of age or older. When the App is used with students under 18, schools are responsible for obtaining any necessary parental consent and ensuring compliance with applicable laws regarding minors' data.</p>
 
   <h2>4. Account Registration</h2>
   <p>To access certain features, you may need to register an account. You agree to provide accurate information and to update it as necessary.</p>
 
   <h2>5. Payments and Pricing</h2>
-  <p>The App is a paid product. By purchasing the App, you agree to the pricing and payment terms outlined during registration or sales. We reserve the right to increase the purchase price in the future to account for factors such as increased operational costs, feature enhancements, or changes in the market.</p>
+  <p>The App is offered as a one-time purchase with perpetual access. Current pricing is available during the registration process. We reserve the right to increase the purchase price for new customers as we onboard additional schools, with the goal of reaching our target pricing tier. Existing customers who have already purchased access will not be subject to price increases and will retain their perpetual access rights.</p>
 
   <h2>6. Use of the App</h2>
   <ul>
@@ -1345,7 +1403,7 @@ app.get("/terms-of-service", (req, res) => {
   </ul>
 
   <h2>7. Data Privacy</h2>
-  <p>We take data privacy seriously. Data collected through the App will be handled in accordance with our <a href="#">Privacy Policy</a>. The App is FERPA-aware and does not collect more information than is necessary for educational use.</p>
+  <p>We are committed to protecting student privacy and educational data. The App is designed to be FERPA-compliant and collects only data necessary for educational purposes. Detailed information about our data practices, retention periods, and security measures is available in our Privacy Policy. Schools maintain ownership and control over their educational data.</p>
 
   <h2>8. Communications</h2>
   <p>The App may allow users to send emails to parents or staff. You agree that you will use these communication features responsibly and in accordance with your school’s policies.</p>
@@ -1354,7 +1412,7 @@ app.get("/terms-of-service", (req, res) => {
   <p>All content, features, and software of the App are the property of [Your Company Name] and protected under applicable laws. You may not reproduce, distribute, or create derivative works from our content without explicit permission.</p>
 
   <h2>10. Termination</h2>
-  <p>We reserve the right to suspend or terminate your access to the App at any time for violation of these Terms or for other appropriate reasons.</p>
+  <p>We reserve the right to suspend or terminate access for violation of these Terms with reasonable notice when possible. Upon termination, schools may request export of their data within 30 days, after which data may be deleted in accordance with our data retention policies.</p>
 
   <h2>11. Changes to These Terms</h2>
   <p>We may update these Terms occasionally. Continued use of the App constitutes your acceptance of any changes.</p>
@@ -1368,9 +1426,16 @@ app.get("/terms-of-service", (req, res) => {
   <h2>14. Governing Law</h2>
   <p>These Terms are governed by the laws of the state of [Your State]. Any disputes shall be resolved in the appropriate courts of that jurisdiction.</p>
 
-  <h2>15. Contact</h2>
-  <p>If you have any questions about these Terms, please contact us at trinitycapitalsim@gmail.com.</p>
+  <h2>15. Accesibility</h2>
+  <p>We strive to ensure our App is accessible to users with disabilities and aim to comply with applicable accessibility standards including Section 508 and WCAG guidelines.</p>
 
+  <h2>16. Service Availability</h2>
+  <p>While we strive to provide reliable service, we do not guarantee uninterrupted access. We will provide reasonable notice of planned maintenance when possible.</p>
+
+  <h2>17. Contact</h2>
+  <p>If you have any questions about these Terms, please contact us at [Insert Contact Email or Address].</p>
+
+  
 </body>
 </html>
   `);
