@@ -1305,15 +1305,74 @@ The Trinity Capital Team
 // Terms of Service endpoint
 app.get("/terms-of-service", (req, res) => {
   res.send(`
-    <html>
-      <head>
-        <title>Terms of Service - Trinity Capital</title>
-      </head>
-      <body>
-        <h1>Terms of Service</h1>
-        <p>This is the Terms of Service for Trinity Capital. Please update this content with your actual terms of service details.</p>
-      </body>
-    </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service - Trintiy Capital</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
+    h1, h2 { color: #2c3e50; }
+    p { margin-bottom: 15px; }
+    ul { margin-left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Terms of Service</h1>
+  <p>Last Updated: [Insert Date]</p>
+
+  <h2>1. Acceptance of Terms</h2>
+  <p>By accessing and using our financial literacy application ("Trinity Capital"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not use the App.</p>
+
+  <h2>2. Description of the App</h2>
+  <p>The App is designed to provide financial literacy resources to students and educators. It includes lesson planning tools, email communication features, reporting tools, and more.</p>
+
+  <h2>3. Eligibility</h2>
+  <p>Use of the App is limited to authorized school personnel, educators, and administrators. Users must be 18 years of age or older or have legal authority to act on behalf of their school.</p>
+
+  <h2>4. Account Registration</h2>
+  <p>To access certain features, you may need to register an account. You agree to provide accurate information and to update it as necessary.</p>
+
+  <h2>5. Payments and Pricing</h2>
+  <p>The App is a paid product. By purchasing the App, you agree to the pricing and payment terms outlined during registration or sales. We reserve the right to increase the purchase price in the future to account for factors such as increased operational costs, feature enhancements, or changes in the market.</p>
+
+  <h2>6. Use of the App</h2>
+  <ul>
+    <li>You agree to use the App only for lawful and educational purposes.</li>
+    <li>You will not attempt to reverse-engineer, modify, or hack the App.</li>
+    <li>You will not use the App to send spam or unauthorized communications.</li>
+  </ul>
+
+  <h2>7. Data Privacy</h2>
+  <p>We take data privacy seriously. Data collected through the App will be handled in accordance with our <a href="#">Privacy Policy</a>. The App is FERPA-aware and does not collect more information than is necessary for educational use.</p>
+
+  <h2>8. Communications</h2>
+  <p>The App may allow users to send emails to parents or staff. You agree that you will use these communication features responsibly and in accordance with your school’s policies.</p>
+
+  <h2>9. Intellectual Property</h2>
+  <p>All content, features, and software of the App are the property of [Your Company Name] and protected under applicable laws. You may not reproduce, distribute, or create derivative works from our content without explicit permission.</p>
+
+  <h2>10. Termination</h2>
+  <p>We reserve the right to suspend or terminate your access to the App at any time for violation of these Terms or for other appropriate reasons.</p>
+
+  <h2>11. Changes to These Terms</h2>
+  <p>We may update these Terms occasionally. Continued use of the App constitutes your acceptance of any changes.</p>
+
+  <h2>12. Disclaimer of Warranties</h2>
+  <p>The App is provided "as is" without warranty of any kind. We do not guarantee uninterrupted access or error-free performance.</p>
+
+  <h2>13. Limitation of Liability</h2>
+  <p>We are not liable for any indirect, incidental, or consequential damages resulting from your use of the App.</p>
+
+  <h2>14. Governing Law</h2>
+  <p>These Terms are governed by the laws of the state of [Your State]. Any disputes shall be resolved in the appropriate courts of that jurisdiction.</p>
+
+  <h2>15. Contact</h2>
+  <p>If you have any questions about these Terms, please contact us at trinitycapitalsim@gmail.com.</p>
+
+</body>
+</html>
   `);
 });
 
