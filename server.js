@@ -1304,10 +1304,10 @@ The Trinity Capital Team
 </head>
 <body>
   <h1>Privacy Policy</h1>
-  <p>Last Updated: [Insert Date]</p>
+  <p>Last Updated: 07/03/2025</p>
 
   <h2>1. Introduction</h2>
-  <p>This Privacy Policy describes how [Your Company Name] ("we," "our," or "us") collects, uses, and protects personal information in connection with our financial literacy application ("the App").</p>
+  <p>This Privacy Policy describes how FERGUSON SOFTWARE SOLUTIONS, LLC ("we," "our," or "us") collects, uses, and protects personal information in connection with our financial literacy application ("Trinity Capital").</p>
 
   <h2>2. Information We Collect</h2>
   <ul>
@@ -1352,7 +1352,7 @@ The Trinity Capital Team
   <p>We may update this policy periodically. Continued use of the App after changes are posted constitutes your acceptance of the revised terms.</p>
 
   <h2>10. Contact Us</h2>
-  <p>If you have any questions or concerns about this Privacy Policy, please contact us at [Insert Contact Email or Address].</p>
+  <p>If you have any questions or concerns about this Privacy Policy, please contact us at trinitycapitalsim@gmail.com.</p>
 
 </body>
 </html>
