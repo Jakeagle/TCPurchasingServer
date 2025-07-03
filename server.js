@@ -177,8 +177,7 @@ app.post("/create-checkout-session", async (req, res) => {
       submit_type: "auto",
       billing_address_collection: "auto",
       success_url: "https://trincaplicensedist.netlify.app",
-      cancel_url:
-        "https://tcpurchasingserver-production.up.railway.app/error",
+      cancel_url: "https://tcpurchasingserver-production.up.railway.app/error",
       metadata: {
         student_quantity: student_quantity.toString(),
         teacher_quantity: teacher_quantity.toString(),
@@ -1285,6 +1284,37 @@ The Trinity Capital Team
     console.error("Failed to process parcel:", err);
     res.status(500).json({ error: "Server error: " + err.message });
   }
+});
+~(
+  // Privacy Policy endpoint
+  app.get("/privacy-policy", (req, res) => {
+    res.send(`
+    <html>
+      <head>
+        <title>Privacy Policy - Trinity Capital</title>
+      </head>
+      <body>
+        <h1>Privacy Policy</h1>
+        <p>This is the Privacy Policy for Trinity Capital. Please update this content with your actual privacy policy details.</p>
+      </body>
+    </html>
+  `);
+  })
+);
+
+// Terms of Service endpoint
+app.get("/terms-of-service", (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <title>Terms of Service - Trinity Capital</title>
+      </head>
+      <body>
+        <h1>Terms of Service</h1>
+        <p>This is the Terms of Service for Trinity Capital. Please update this content with your actual terms of service details.</p>
+      </body>
+    </html>
+  `);
 });
 
 // Start server
