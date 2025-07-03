@@ -178,7 +178,7 @@ app.post("/create-checkout-session", async (req, res) => {
       billing_address_collection: "auto",
       success_url: "https://trincaplicensedist.netlify.app",
       cancel_url:
-        "https://moneytalkspurchasing-2-bkftf2deeyexc3c0.eastus-01.azurewebsites.net/error",
+        "https://tcpurchasingserver-production.up.railway.app/error",
       metadata: {
         student_quantity: student_quantity.toString(),
         teacher_quantity: teacher_quantity.toString(),
