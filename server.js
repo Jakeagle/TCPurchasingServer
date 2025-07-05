@@ -1300,6 +1300,7 @@ The Trinity Capital Team
     h1, h2 { color: #2c3e50; }
     p { margin-bottom: 15px; }
     ul { margin-left: 20px; }
+    .gmail-section { background-color: #f8f9fa; padding: 20px; border-left: 4px solid #4285f4; margin: 20px 0; }
   </style>
 </head>
 <body>
@@ -1312,46 +1313,81 @@ The Trinity Capital Team
   <h2>2. Information We Collect</h2>
   <ul>
     <li><strong>Account Information:</strong> Name, email address, school affiliation, and role.</li>
-    <li><strong>Usage Data:</strong> Pages visited, features used, time spent on the App, and performance logs.</li>
-    <li><strong>Communication Data:</strong> Emails sent via the App, subject lines, recipients, and delivery metadata.</li>
+    <li><strong>Authentication Data:</strong> Encrypted OAuth tokens that allow teachers to send emails from their school email addresses through our platform.</li>
+    <li><strong>Usage Data:</strong> Basic platform usage metrics for service improvement (pages accessed, login times).</li>
     <li><strong>Student Data (if applicable):</strong> Only minimal information needed to support lesson delivery and reporting features.</li>
   </ul>
 
-  <h2>3. How We Use Your Information</h2>
+  <div class="gmail-section">
+    <h2>3. Gmail API Integration</h2>
+    <ul>
+      <li>We use Google's Gmail API solely to enable teachers to send emails from their school email addresses.</li>
+      <li><strong>We do not read, store, or analyze email content, subject lines, or message bodies.</strong></li>
+      <li>Email delivery is handled directly by Gmail's secure servers.</li>
+      <li>We store only encrypted authentication tokens necessary for this functionality.</li>
+      <li>Teachers maintain full control over their email communications.</li>
+      <li>OAuth tokens are automatically deleted when users revoke access through their Google account settings.</li>
+    </ul>
+  </div>
+
+  <h2>4. How We Use Your Information</h2>
   <ul>
     <li>To provide and improve the App experience.</li>
-    <li>To support communication between educators, parents, and staff.</li>
+    <li>To authenticate teachers with their school email accounts for secure email sending.</li>
+    <li>To enable teachers to send emails from their school email addresses through our platform.</li>
     <li>To respond to user inquiries and provide technical support.</li>
     <li>To meet legal and educational compliance standards (e.g., FERPA).</li>
   </ul>
 
-  <h2>4. Sharing and Disclosure</h2>
+  <h2>5. Sharing and Disclosure</h2>
   <p>We do not sell personal data. Information is shared only under these circumstances:</p>
   <ul>
     <li>With your school or district for administrative purposes.</li>
-    <li>With trusted service providers that help us operate the App (e.g., cloud hosting, email services).</li>
+    <li>With trusted service providers that help us operate the App (e.g., MongoDB database hosting, Railway cloud infrastructure).</li>
     <li>As required by law or to protect rights and safety.</li>
+    <li><strong>We do not share email content or communications data with any third parties.</strong></li>
   </ul>
 
-  <h2>5. Data Retention</h2>
+  <h2>6. Data Retention</h2>
   <p>We retain data only as long as necessary to provide the service or as required by law. Users may request deletion of their account and associated data at any time.</p>
+  <ul>
+    <li><strong>OAuth tokens are automatically deleted when users revoke access through their Google account settings.</strong></li>
+    <li><strong>No email content is stored on our servers.</strong></li>
+  </ul>
 
-  <h2>6. Security</h2>
+  <h2>7. Security</h2>
   <p>We implement industry-standard safeguards to protect data from unauthorized access, loss, misuse, or alteration. However, no method is 100% secure.</p>
+  <ul>
+    <li>All OAuth tokens are encrypted both in transit and at rest.</li>
+    <li>Database connections use encryption and secure protocols.</li>
+    <li>Our infrastructure is hosted on secure, compliant cloud platforms.</li>
+  </ul>
 
-  <h2>7. Student Data and FERPA Compliance</h2>
+  <h2>8. Student Data and FERPA Compliance</h2>
   <p>We comply with the Family Educational Rights and Privacy Act (FERPA). Student data is handled only for legitimate educational purposes and never for commercial gain.</p>
 
-  <h2>8. Your Choices</h2>
+  <h2>9. Your Choices</h2>
   <ul>
     <li>You may review, update, or delete your personal information at any time by contacting us.</li>
     <li>You may opt out of non-essential communications through your account settings.</li>
+    <li><strong>You can revoke Gmail API access at any time through your Google account settings.</strong></li>
+    <li><strong>Revoking access will prevent email sending through our platform but will not affect your Google account.</strong></li>
   </ul>
 
-  <h2>9. Changes to This Privacy Policy</h2>
+  <h2>10. Data Subject Rights</h2>
+  <p>You have the right to:</p>
+  <ul>
+    <li>Access the personal information we have about you</li>
+    <li>Correct any inaccurate information</li>
+    <li>Delete your account and associated data</li>
+    <li>Revoke OAuth permissions at any time</li>
+    <li>Receive a copy of your data in a portable format</li>
+  </ul>
+
+  <h2>11. Changes to This Privacy Policy</h2>
   <p>We may update this policy periodically. Continued use of the App after changes are posted constitutes your acceptance of the revised terms.</p>
 
-  <h2>10. Contact Us</h2>
+  <h2>12. Contact Us</h2>
   <p>If you have any questions or concerns about this Privacy Policy, please contact us at trinitycapitalsim@gmail.com.</p>
 
 </body>
@@ -1374,6 +1410,7 @@ app.get("/terms-of-service", (req, res) => {
     h1, h2 { color: #2c3e50; }
     p { margin-bottom: 15px; }
     ul { margin-left: 20px; }
+    .gmail-section { background-color: #f8f9fa; padding: 20px; border-left: 4px solid #4285f4; margin: 20px 0; }
   </style>
 </head>
 <body>
@@ -1400,19 +1437,36 @@ app.get("/terms-of-service", (req, res) => {
     <li>You agree to use the App only for lawful and educational purposes.</li>
     <li>You will not attempt to reverse-engineer, modify, or hack the App.</li>
     <li>You will not use the App to send spam or unauthorized communications.</li>
+    <li><strong>You agree to use Gmail API integration only for sending emails from your authorized school email account.</strong></li>
+    <li><strong>You will not attempt to access, read, or modify emails beyond the sending functionality provided.</strong></li>
   </ul>
 
   <h2>7. Data Privacy</h2>
   <p>We are committed to protecting student privacy and educational data. The App is designed to be FERPA-compliant and collects only data necessary for educational purposes. Detailed information about our data practices, retention periods, and security measures is available in our Privacy Policy. Schools maintain ownership and control over their educational data.</p>
 
-  <h2>8. Communications</h2>
-  <p>The App may allow users to send emails to parents or staff. You agree that you will use these communication features responsibly and in accordance with your school’s policies.</p>
+  <div class="gmail-section">
+    <h2>8. Email Communication and Gmail API</h2>
+    <p>The App allows users to send emails through Gmail API integration. By using this feature, you agree that:</p>
+    <ul>
+      <li>You will use email communication features responsibly and in accordance with your school's policies.</li>
+      <li><strong>You authorize the App to send emails on your behalf from your school email address.</strong></li>
+      <li><strong>The App will not read, store, or access your existing emails.</strong></li>
+      <li><strong>You can revoke Gmail API access at any time through your Google account settings.</strong></li>
+      <li><strong>You are responsible for the content of emails sent through the platform.</strong></li>
+      <li>All email communications must comply with applicable laws and your institution's policies.</li>
+    </ul>
+  </div>
 
   <h2>9. Intellectual Property</h2>
   <p>All content, features, and software of the App are the property of FERGUSON SOFTWARE SOLUTIONS, LLC and protected under applicable laws. You may not reproduce, distribute, or create derivative works from our content without explicit permission.</p>
 
   <h2>10. Termination</h2>
-  <p>We reserve the right to suspend or terminate access for violation of these Terms with reasonable notice when possible. Upon termination, schools may request export of their data within 30 days, after which data may be deleted in accordance with our data retention policies.</p>
+  <p>We reserve the right to suspend or terminate access for violation of these Terms with reasonable notice when possible. Upon termination:</p>
+  <ul>
+    <li>Schools may request export of their data within 30 days, after which data may be deleted in accordance with our data retention policies.</li>
+    <li><strong>Gmail API access tokens will be automatically invalidated.</strong></li>
+    <li><strong>Users should revoke Gmail API permissions through their Google account settings.</strong></li>
+  </ul>
 
   <h2>11. Changes to These Terms</h2>
   <p>We may update these Terms occasionally. Continued use of the App constitutes your acceptance of any changes.</p>
@@ -1423,19 +1477,21 @@ app.get("/terms-of-service", (req, res) => {
   <h2>13. Limitation of Liability</h2>
   <p>We are not liable for any indirect, incidental, or consequential damages resulting from your use of the App.</p>
 
-  <h2>14. Governing Law</h2>
+  <h2>14. Third-Party Services</h2>
+  <p>The App integrates with third-party services including Google's Gmail API. Your use of these services is also subject to their respective terms of service and privacy policies. We are not responsible for the availability, functionality, or policies of third-party services.</p>
+
+  <h2>15. Governing Law</h2>
   <p>These Terms are governed by the laws of the state of Texas. Any disputes shall be resolved in the appropriate courts of that jurisdiction.</p>
 
-  <h2>15. Accesibility</h2>
+  <h2>16. Accessibility</h2>
   <p>We strive to ensure our App is accessible to users with disabilities and aim to comply with applicable accessibility standards including Section 508 and WCAG guidelines.</p>
 
-  <h2>16. Service Availability</h2>
+  <h2>17. Service Availability</h2>
   <p>While we strive to provide reliable service, we do not guarantee uninterrupted access. We will provide reasonable notice of planned maintenance when possible.</p>
 
-  <h2>17. Contact</h2>
+  <h2>18. Contact</h2>
   <p>If you have any questions about these Terms, please contact us at trinitycapitalsim@gmail.com.</p>
 
-  
 </body>
 </html>
   `);
