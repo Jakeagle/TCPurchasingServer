@@ -1294,7 +1294,7 @@ The Trinity Capital Team
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy - [Your App Name]</title>
+  <title>Privacy Policy - Trinity Capital </title>
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
     h1, h2 { color: #2c3e50; }
@@ -1368,7 +1368,7 @@ app.get("/terms-of-service", (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Terms of Service - [Your App Name]</title>
+  <title>Terms of Service - Trinity Capital</title>
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
     h1, h2 { color: #2c3e50; }
@@ -1381,7 +1381,7 @@ app.get("/terms-of-service", (req, res) => {
   <p>Last Updated: 07/03/2025</p>
 
   <h2>1. Acceptance of Terms</h2>
-  <p>By accessing and using our financial literacy application ("the App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not use the App.</p>
+  <p>By accessing and using our financial literacy application ("Trinity Capital"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not use the App.</p>
 
   <h2>2. Description of the App</h2>
   <p>The App is designed to provide financial literacy resources to students and educators. It includes lesson planning tools, email communication features, reporting tools, and more.</p>
@@ -1409,7 +1409,7 @@ app.get("/terms-of-service", (req, res) => {
   <p>The App may allow users to send emails to parents or staff. You agree that you will use these communication features responsibly and in accordance with your school’s policies.</p>
 
   <h2>9. Intellectual Property</h2>
-  <p>All content, features, and software of the App are the property of [Your Company Name] and protected under applicable laws. You may not reproduce, distribute, or create derivative works from our content without explicit permission.</p>
+  <p>All content, features, and software of the App are the property of FERGUSON SOFTWARE SOLUTIONS, LLC and protected under applicable laws. You may not reproduce, distribute, or create derivative works from our content without explicit permission.</p>
 
   <h2>10. Termination</h2>
   <p>We reserve the right to suspend or terminate access for violation of these Terms with reasonable notice when possible. Upon termination, schools may request export of their data within 30 days, after which data may be deleted in accordance with our data retention policies.</p>
@@ -1424,7 +1424,7 @@ app.get("/terms-of-service", (req, res) => {
   <p>We are not liable for any indirect, incidental, or consequential damages resulting from your use of the App.</p>
 
   <h2>14. Governing Law</h2>
-  <p>These Terms are governed by the laws of the state of [Your State]. Any disputes shall be resolved in the appropriate courts of that jurisdiction.</p>
+  <p>These Terms are governed by the laws of the state of Texas. Any disputes shall be resolved in the appropriate courts of that jurisdiction.</p>
 
   <h2>15. Accesibility</h2>
   <p>We strive to ensure our App is accessible to users with disabilities and aim to comply with applicable accessibility standards including Section 508 and WCAG guidelines.</p>
@@ -1433,7 +1433,7 @@ app.get("/terms-of-service", (req, res) => {
   <p>While we strive to provide reliable service, we do not guarantee uninterrupted access. We will provide reasonable notice of planned maintenance when possible.</p>
 
   <h2>17. Contact</h2>
-  <p>If you have any questions about these Terms, please contact us at [Insert Contact Email or Address].</p>
+  <p>If you have any questions about these Terms, please contact us at trinitycapitalsim@gmail.com.</p>
 
   
 </body>
