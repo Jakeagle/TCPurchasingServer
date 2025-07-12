@@ -212,6 +212,22 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
+app.post("/request-quote", async (req, res) => {
+  try {
+    const { student_quantity, teacher_quantity } = req.body;
+
+    console.log("✅ Quote request received successfully:");
+    console.log(`   - Student Licenses: ${student_quantity}`);
+    console.log(`   - Teacher Licenses: ${teacher_quantity}`);
+
+    // For now, just acknowledge receipt of the request.
+    res.status(200).json({ message: "Quote request received." });
+  } catch (error) {
+    console.error("Error processing quote request:", error);
+    res.status(500).json({ error: "Failed to process quote request." });
+  }
+});
+
 app.get("/checkout-session/:session_id", async (req, res) => {
   try {
     const { session_id } = req.params;
