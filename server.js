@@ -111,6 +111,18 @@ app.post(
 // Express middleware for all other routes (must come AFTER webhook)
 app.use(express.static("public"));
 app.use(express.json({ limit: "10mb" }));
+
+// Simple security middleware - forces HTTPS upgrade for mixed content
+app.use((req, res, next) => {
+  res.setHeader(
+    "Strict-Transport-Security",
+    "max-age=31536000; includeSubDomains"
+  );
+  res.setHeader("Content-Security-Policy", "upgrade-insecure-requests");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  next();
+});
+
 app.use(
   cors({
     origin: allowedOrigins,
