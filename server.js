@@ -110,7 +110,7 @@ app.post(
 
 // Express middleware for all other routes (must come AFTER webhook)
 app.use(express.static("public"));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 app.use(
   cors({
     origin: allowedOrigins,
@@ -1299,6 +1299,76 @@ The Trinity Capital Team
   } catch (err) {
     console.error("Failed to process parcel:", err);
     res.status(500).json({ error: "Server error: " + err.message });
+  }
+});
+
+// --- Email Quote PDF endpoint ---
+app.post("/send-quote-email", async (req, res) => {
+  try {
+    console.log("Received email request");
+
+    const {
+      pdfBase64,
+      pdfFilename,
+      recipientEmail,
+      adminName,
+      districtName,
+      schoolName,
+      schoolAddress,
+      studentQty,
+      teacherQty,
+      studentTotal,
+      teacherTotal,
+      grandTotal,
+      quoteId,
+      quoteDate,
+    } = req.body;
+
+    if (!pdfBase64 || !recipientEmail) {
+      return res.status(400).json({ error: "Missing PDF or recipient email" });
+    }
+    // Decode base64 PDF
+    const pdfBuffer = Buffer.from(pdfBase64, "base64");
+
+    // Setup nodemailer
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: recipientEmail,
+      subject:
+        `Quote PDF from Trinity Capital` +
+        (schoolName ? ` - ${schoolName}` : ""),
+      text:
+        `Dear ${adminName || "Administrator"},\n\n` +
+        `Please find attached your requested quote.\n\n` +
+        `School: ${schoolName}\nDistrict: ${districtName}\nAddress: ${schoolAddress}\n` +
+        `Student Licenses: ${studentQty} ($${studentTotal})\n` +
+        `Teacher Licenses: ${teacherQty} ($${teacherTotal})\n` +
+        `Total: $${grandTotal}\nQuote ID: ${quoteId}\nQuote Date: ${quoteDate}\n\n` +
+        `Note: W-9 tax form is available upon request.\n\n` +
+        `Thank you for your interest in Trinity Capital.`,
+      attachments: [
+        {
+          filename: pdfFilename || "Quote.pdf",
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully");
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error sending quote email:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
