@@ -188,7 +188,7 @@ app.post("/create-checkout-session", async (req, res) => {
       mode: "payment",
       submit_type: "auto",
       billing_address_collection: "auto",
-      success_url: "https://trincaplicensedist.netlify.app",
+      success_url: `https://license-distribution.trinity-capital.net?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: "https://tcpurchasingserver-production.up.railway.app/error",
       metadata: {
         student_quantity: student_quantity.toString(),
@@ -258,7 +258,7 @@ app.get("/checkout-session/:session_id", async (req, res) => {
 
 // Success endpoint to redirect after payment
 app.get("/success", (req, res) => {
-  res.redirect("https://trincaplicensedist.netlify.app");
+  res.redirect("https://license-distribution.trinity-capital.net");
 });
 
 // Error endpoint for cancelled or unsuccessful payments
@@ -1254,7 +1254,7 @@ Total Purchase Price: $${totalPurchasePrice}
 
 To distribute these licenses to your teachers, please follow the instructions below:
 
-1. Navigate to https://trincaplicensedist.netlify.app  
+1. Navigate to https://license-distribution.trinity-capital.net  
 2. Enter the email address you used for this purchase: ${adminEmail}  
 3. Enter each teacher's email address and click "Send Code"  
 4. Repeat until the page confirms all licenses have been distributed
