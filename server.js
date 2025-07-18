@@ -78,6 +78,9 @@ app.post(
     try {
       switch (event.type) {
         case "checkout.session.completed":
+          console.log(
+            "🎯 [EMAIL DEBUG] Stripe checkout completed - this should trigger email"
+          );
           console.log("Processing checkout.session.completed event");
           const sessionId = event.data.object.id;
           const session = await stripe.checkout.sessions.retrieve(sessionId, {
@@ -283,7 +286,8 @@ app.get("/error", (req, res) => {
 // Update your handleSuccessfulPayment function to extract data properly:
 async function handleSuccessfulPayment(session) {
   try {
-    console.log("Processing successful payment...");
+    console.log("🎯 [EMAIL DEBUG] Processing successful payment...");
+    console.log("🎯 [EMAIL DEBUG] This should trigger a confirmation email");
     console.log("Session details:", JSON.stringify(session, null, 2));
 
     // Extract data from session
@@ -376,6 +380,8 @@ async function handleSuccessfulPayment(session) {
 
     // Send confirmation email
     try {
+      console.log("🎯 [EMAIL DEBUG] About to send confirmation email...");
+      console.log("🎯 [EMAIL DEBUG] Email will be sent to:", adminEmail);
       console.log("🔄 Attempting to send confirmation email...");
       console.log("📧 Email details:");
       console.log("  - From:", process.env.EMAIL_USER);
@@ -410,6 +416,7 @@ async function handleSuccessfulPayment(session) {
       });
 
       console.log("✅ Email sent successfully!");
+      console.log("🎯 [EMAIL DEBUG] CONFIRMATION EMAIL SENT SUCCESSFULLY!");
       console.log("📨 Email result:", {
         messageId: emailResult.messageId,
         response: emailResult.response,
@@ -417,6 +424,7 @@ async function handleSuccessfulPayment(session) {
         rejected: emailResult.rejected,
       });
     } catch (emailError) {
+      console.error("🎯 [EMAIL DEBUG] FAILED TO SEND CONFIRMATION EMAIL!");
       console.error("❌ FAILED to send confirmation email:");
       console.error("📋 Email Error Details:");
       console.error("  - Error message:", emailError.message);
@@ -936,7 +944,13 @@ School District: ${license.district_name}`;
 // Send teacher access code email
 app.post("/send-teacher-code-email", async (req, res) => {
   try {
+    console.log("🎯 [EMAIL DEBUG] Teacher code email endpoint called");
     const { admin_email, recipient_email, subject, body, code_id } = req.body;
+    console.log("🎯 [EMAIL DEBUG] Request data:", {
+      admin_email,
+      recipient_email,
+      subject: subject?.substring(0, 50) + "...",
+    });
 
     // Validate admin
     const license = await client
@@ -982,6 +996,7 @@ app.post("/send-teacher-code-email", async (req, res) => {
     });
 
     // Send the email
+    console.log("🎯 [EMAIL DEBUG] About to send teacher code email...");
     const emailResult = await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: recipient_email,
@@ -991,6 +1006,7 @@ app.post("/send-teacher-code-email", async (req, res) => {
       replyTo: admin_email, // Allow teacher to reply directly to admin
     });
 
+    console.log("🎯 [EMAIL DEBUG] TEACHER CODE EMAIL SENT SUCCESSFULLY!");
     console.log("Teacher code email sent successfully:", emailResult);
 
     // Mark the code as sent and used (so it won't be selected again)
@@ -1143,6 +1159,7 @@ app.post("/validate-admin", async (req, res) => {
 });
 
 app.post("/send-parcel-email", async (req, res) => {
+  console.log("🎯 [EMAIL DEBUG] Parcel email endpoint called");
   const {
     schoolName,
     schoolDistrict,
@@ -1154,6 +1171,11 @@ app.post("/send-parcel-email", async (req, res) => {
     totalPurchasePrice,
     adminEmail,
   } = req.body;
+
+  console.log("🎯 [EMAIL DEBUG] Parcel data received:", {
+    schoolName,
+    adminEmail,
+  });
 
   if (
     !schoolName ||
@@ -1236,7 +1258,9 @@ The Trinity Capital Team
   };
 
   try {
+    console.log("🎯 [EMAIL DEBUG] About to send parcel confirmation email...");
     await transporter.sendMail(mailOptions);
+    console.log("🎯 [EMAIL DEBUG] PARCEL EMAIL SENT SUCCESSFULLY!");
     console.log(`Confirmation email sent to ${adminEmail}`);
 
     // Save license record in DB with all new fields
