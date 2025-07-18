@@ -314,7 +314,7 @@ async function handleSuccessfulPayment(session) {
 
     // Create nodemailer transport with detailed logging
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      service: "gmail", // Google Workspace uses Gmail SMTP
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
@@ -490,7 +490,7 @@ async function handleSuccessfulPayment(session) {
 
     // Create nodemailer transport
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      service: "gmail", // Google Workspace uses Gmail SMTP
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
@@ -1012,7 +1012,7 @@ app.post("/send-teacher-code-email", async (req, res) => {
 
     // Create nodemailer transport
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      service: "gmail", // Google Workspace uses Gmail SMTP
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
@@ -1225,7 +1225,7 @@ app.post("/send-parcel-email", async (req, res) => {
 
   // Send confirmation email
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    service: "gmail", // Google Workspace uses Gmail SMTP
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
@@ -1344,7 +1344,7 @@ app.post("/send-quote-email", async (req, res) => {
 
     // Setup nodemailer
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      service: "gmail", // Google Workspace uses Gmail SMTP
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
