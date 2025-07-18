@@ -312,12 +312,17 @@ async function handleSuccessfulPayment(session) {
       throw new Error("No admin email found in session");
     }
 
-    // Create nodemailer transport with detailed logging
+    // Create nodemailer transport with Google Workspace SMTP
     const transporter = nodemailer.createTransport({
-      service: "gmail", // Google Workspace uses Gmail SMTP
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // true for 465, false for other ports
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
       logger: true,
       debug: true,
@@ -326,9 +331,16 @@ async function handleSuccessfulPayment(session) {
     // Verify email configuration
     try {
       await transporter.verify();
-      console.log("Email transport verified successfully");
+      console.log(
+        "✅ Email transport verified successfully for Google Workspace"
+      );
     } catch (error) {
-      console.error("Email transport verification failed:", error);
+      console.error("❌ Email transport verification failed:");
+      console.error("Error message:", error.message);
+      console.error("Error code:", error.code);
+      console.error(
+        "Check your Google Workspace email settings and app password"
+      );
       throw error;
     }
 
@@ -453,123 +465,6 @@ async function generateAccessCodes(
     return accessCodes;
   } catch (error) {
     console.error("Error generating access codes:", error);
-    throw error;
-  }
-}
-
-// Simplified handleSuccessfulPayment - just stores license counts
-async function handleSuccessfulPayment(session) {
-  try {
-    console.log("Processing successful payment...");
-    console.log("Session details:", JSON.stringify(session, null, 2));
-
-    // Extract data from session
-    const school_name =
-      session.custom_fields?.find((field) => field.key === "school_name")?.text
-        ?.value || "Unknown School";
-    const district_name =
-      session.custom_fields?.find((field) => field.key === "district_name")
-        ?.text?.value || "Unknown District";
-    const student_quantity = parseInt(session.metadata.student_quantity) || 0;
-    const teacher_quantity = parseInt(session.metadata.teacher_quantity) || 0;
-    const adminEmail = session.customer_details?.email;
-    const adminName = adminEmail ? adminEmail.split("@")[0] : "Administrator";
-
-    console.log("Extracted data:", {
-      school_name,
-      district_name,
-      student_quantity,
-      teacher_quantity,
-      adminEmail,
-      adminName,
-    });
-
-    if (!adminEmail) {
-      throw new Error("No admin email found in session");
-    }
-
-    // Create nodemailer transport
-    const transporter = nodemailer.createTransport({
-      service: "gmail", // Google Workspace uses Gmail SMTP
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-      logger: true,
-      debug: true,
-    });
-
-    // Verify email configuration
-    try {
-      await transporter.verify();
-      console.log("Email transport verified successfully");
-    } catch (error) {
-      console.error("Email transport verification failed:", error);
-      throw error;
-    }
-
-    // Send confirmation email
-    const emailResult = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: adminEmail,
-      subject: `Trinity Capital - License Purchase Confirmation for ${school_name}`,
-      html: `
-        <h2>License Purchase Confirmation</h2>
-        <p>Dear ${adminName},</p>
-        <p>Thank you for your purchase! Your Trinity Capital licenses have been successfully processed.</p>
-        
-        <h3>Purchase Details:</h3>
-        <ul>
-          <li><strong>School:</strong> ${school_name}</li>
-          <li><strong>District:</strong> ${district_name}</li>
-          <li><strong>Teacher Licenses:</strong> ${teacher_quantity}</li>
-          <li><strong>Student Licenses:</strong> ${student_quantity}</li>
-          <li><strong>Purchase Date:</strong> ${new Date().toLocaleDateString()}</li>
-        </ul>
-        
-        <p>Your teacher access codes are ready! Teachers can use these codes to create accounts and generate class codes for their students.</p>
-        <p>If you have any questions, please don't hesitate to contact our support team.</p>
-        
-        <p>Best regards,<br>The Trinity Capital Team</p>
-      `,
-    });
-
-    console.log("Email sent successfully:", emailResult);
-
-    // Save license record with simple counts
-    const licenseRecord = {
-      school_name,
-      district_name,
-      admin_email: adminEmail, // Use full email address
-      admin_name: adminName, // Use name part only
-      teacher_licenses: teacher_quantity,
-      student_licenses: student_quantity,
-      stripe_session_id: session.id,
-      stripe_customer_id: session.customer,
-      payment_status: "completed",
-      amount_paid: session.amount_total,
-      currency: session.currency,
-      purchase_date: new Date(),
-      license_expiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      is_active: true,
-    };
-
-    await client
-      .db("TrinityCapital")
-      .collection("School Licenses")
-      .insertOne(licenseRecord);
-    console.log("License record saved to database");
-
-    // Generate teacher access codes
-    await generateAccessCodes(
-      school_name,
-      adminName,
-      teacher_quantity,
-      student_quantity
-    );
-    console.log("Teacher access codes generated successfully");
-  } catch (error) {
-    console.error("Error in handleSuccessfulPayment:", error);
     throw error;
   }
 }
@@ -707,10 +602,15 @@ async function sendLicenseConfirmationEmail(
 ) {
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
 
@@ -936,7 +836,7 @@ REGISTRATION INSTRUCTIONS:
 
 LOGIN INSTRUCTIONS:
 - To log into the teacher dashboard, use the same username and PIN you created during registration.
-- The teacher dashboard login page is: https://trinitycapitalsignup.netlify.app (or your school's dashboard link).
+- The teacher dashboard login page is: https://teacher-dashboard.trinity-capital.net
 
 AFTER LOGIN:
 - The teacher dashboard will guide you through setting up your classes and generating class codes for your students.
@@ -1010,12 +910,17 @@ app.post("/send-teacher-code-email", async (req, res) => {
         .json({ error: "Invalid or already used teacher code" });
     }
 
-    // Create nodemailer transport
+    // Create nodemailer transport for Google Workspace
     const transporter = nodemailer.createTransport({
-      service: "gmail", // Google Workspace uses Gmail SMTP
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
 
@@ -1223,12 +1128,17 @@ app.post("/send-parcel-email", async (req, res) => {
   const licenseExpiry = new Date(purchaseDate);
   licenseExpiry.setFullYear(licenseExpiry.getFullYear() + 1);
 
-  // Send confirmation email
+  // Send confirmation email with Google Workspace SMTP
   const transporter = nodemailer.createTransport({
-    service: "gmail", // Google Workspace uses Gmail SMTP
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
+    },
+    tls: {
+      rejectUnauthorized: false,
     },
   });
 
@@ -1342,12 +1252,17 @@ app.post("/send-quote-email", async (req, res) => {
     // Decode base64 PDF
     const pdfBuffer = Buffer.from(pdfBase64, "base64");
 
-    // Setup nodemailer
+    // Setup nodemailer for Google Workspace
     const transporter = nodemailer.createTransport({
-      service: "gmail", // Google Workspace uses Gmail SMTP
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
 
