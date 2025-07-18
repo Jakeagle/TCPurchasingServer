@@ -312,6 +312,19 @@ async function handleSuccessfulPayment(session) {
       throw new Error("No admin email found in session");
     }
 
+    // Debug environment variables (mask password for security)
+    console.log("🔧 Environment variables check:");
+    console.log("  - EMAIL_USER:", process.env.EMAIL_USER);
+    console.log("  - EMAIL_PASSWORD exists:", !!process.env.EMAIL_PASSWORD);
+    console.log(
+      "  - EMAIL_PASSWORD length:",
+      process.env.EMAIL_PASSWORD?.length
+    );
+    console.log(
+      "  - EMAIL_PASSWORD preview:",
+      process.env.EMAIL_PASSWORD?.substring(0, 4) + "****"
+    );
+
     // Create nodemailer transport with Google Workspace SMTP
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -330,47 +343,91 @@ async function handleSuccessfulPayment(session) {
 
     // Verify email configuration
     try {
+      console.log("🔍 Verifying email transport configuration...");
       await transporter.verify();
       console.log(
         "✅ Email transport verified successfully for Google Workspace"
       );
+      console.log("🚀 SMTP connection is ready to send emails");
     } catch (error) {
       console.error("❌ Email transport verification failed:");
-      console.error("Error message:", error.message);
-      console.error("Error code:", error.code);
+      console.error("🔍 Verification Error Details:");
+      console.error("  - Error message:", error.message);
+      console.error("  - Error code:", error.code);
+      console.error("  - Error errno:", error.errno);
+      console.error("  - Error syscall:", error.syscall);
+      console.error("  - SMTP response:", error.response);
+      console.error("  - SMTP responseCode:", error.responseCode);
       console.error(
-        "Check your Google Workspace email settings and app password"
+        "🛠️ Check your Google Workspace email settings and app password"
       );
+
+      // Additional troubleshooting info
+      console.error("🔧 Troubleshooting steps:");
+      console.error("  1. Verify EMAIL_USER is a valid Google Workspace email");
+      console.error(
+        "  2. Verify EMAIL_PASSWORD is a valid app password (not regular password)"
+      );
+      console.error("  3. Check if 2-factor authentication is enabled");
+      console.error("  4. Verify app passwords are enabled for your domain");
+
       throw error;
     }
 
     // Send confirmation email
-    const emailResult = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: adminEmail,
-      subject: `Trinity Capital - License Purchase Confirmation for ${school_name}`,
-      html: `
-        <h2>License Purchase Confirmation</h2>
-        <p>Dear ${adminName},</p>
-        <p>Thank you for your purchase! Your Trinity Capital licenses have been successfully processed.</p>
-        
-        <h3>Purchase Details:</h3>
-        <ul>
-          <li><strong>School:</strong> ${school_name}</li>
-          <li><strong>District:</strong> ${district_name}</li>
-          <li><strong>Teacher Licenses:</strong> ${teacher_quantity}</li>
-          <li><strong>Student Licenses:</strong> ${student_quantity}</li>
-          <li><strong>Purchase Date:</strong> ${new Date().toLocaleDateString()}</li>
-        </ul>
-        
-        <p>Your access codes will be available in your admin dashboard within 24 hours.</p>
-        <p>If you have any questions, please don't hesitate to contact our support team.</p>
-        
-        <p>Best regards,<br>The Trinity Capital Team</p>
-      `,
-    });
+    try {
+      console.log("🔄 Attempting to send confirmation email...");
+      console.log("📧 Email details:");
+      console.log("  - From:", process.env.EMAIL_USER);
+      console.log("  - To:", adminEmail);
+      console.log(
+        "  - Subject: Trinity Capital - License Purchase Confirmation"
+      );
 
-    console.log("Email sent successfully:", emailResult);
+      const emailResult = await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: adminEmail,
+        subject: `Trinity Capital - License Purchase Confirmation for ${school_name}`,
+        html: `
+          <h2>License Purchase Confirmation</h2>
+          <p>Dear ${adminName},</p>
+          <p>Thank you for your purchase! Your Trinity Capital licenses have been successfully processed.</p>
+          
+          <h3>Purchase Details:</h3>
+          <ul>
+            <li><strong>School:</strong> ${school_name}</li>
+            <li><strong>District:</strong> ${district_name}</li>
+            <li><strong>Teacher Licenses:</strong> ${teacher_quantity}</li>
+            <li><strong>Student Licenses:</strong> ${student_quantity}</li>
+            <li><strong>Purchase Date:</strong> ${new Date().toLocaleDateString()}</li>
+          </ul>
+          
+          <p>Your access codes will be available in your admin dashboard within 24 hours.</p>
+          <p>If you have any questions, please don't hesitate to contact our support team.</p>
+          
+          <p>Best regards,<br>The Trinity Capital Team</p>
+        `,
+      });
+
+      console.log("✅ Email sent successfully!");
+      console.log("📨 Email result:", {
+        messageId: emailResult.messageId,
+        response: emailResult.response,
+        accepted: emailResult.accepted,
+        rejected: emailResult.rejected,
+      });
+    } catch (emailError) {
+      console.error("❌ FAILED to send confirmation email:");
+      console.error("📋 Email Error Details:");
+      console.error("  - Error message:", emailError.message);
+      console.error("  - Error code:", emailError.code);
+      console.error("  - Error stack:", emailError.stack);
+      console.error("  - SMTP response:", emailError.response);
+      console.error("  - SMTP responseCode:", emailError.responseCode);
+
+      // Don't throw error here - continue with license creation even if email fails
+      console.log("⚠️ Continuing with license creation despite email failure");
+    }
 
     // Save license record to database
     const licenseRecord = {
