@@ -894,7 +894,7 @@ Welcome to Trinity Capital! Your school administrator has purchased Trinity Capi
 Your Teacher Access Code: ${nextCode.code}
 
 REGISTRATION INSTRUCTIONS:
-1. Go to the Trinity Capital teacher registration page: https://trinitycapitalsignup.netlify.app
+1. Go to the Trinity Capital teacher registration page: https://registration.trinity-capital.net
 2. Enter your basic information and your teacher access code: ${nextCode.code}
 3. Select today's date as your registration date.
 4. Click "Next Step" to complete your registration.
