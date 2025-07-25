@@ -24,92 +24,74 @@ const client = new MongoClient(mongoUri, {
   },
 });
 
-// IMPORTANT: Webhook endpoint must be the very first route, before any middleware!
-app.post(
-  "/purchase",
-  express.raw({
-    type: "application/json",
-    limit: "50mb", // Add size limit to prevent issues with large payloads
-  }),
-  async (req, res) => {
-    const sig = req.headers["stripe-signature"];
+// 🚨 EMERGENCY FIX: Create webhook endpoint BEFORE any middleware at all
+// This MUST be the absolute first route registered
+app.use("/purchase", express.raw({ type: "application/json" }));
 
-    // Add more detailed logging
-    console.log("Webhook received:");
-    console.log("- Headers:", req.headers);
-    console.log("- Body type:", typeof req.body);
-    console.log("- Body length:", req.body ? req.body.length : "undefined");
-    console.log("- Signature:", sig);
+app.post("/purchase", async (req, res) => {
+  const sig = req.headers["stripe-signature"];
 
-    let event;
+  // Enhanced debugging for signature issues
+  console.log("🔍 EMERGENCY WEBHOOK DEBUG:");
+  console.log("- Stripe signature:", sig);
+  console.log("- Body is Buffer:", Buffer.isBuffer(req.body));
+  console.log("- Body type:", typeof req.body);
+  console.log("- Body length:", req.body?.length);
+  console.log("- Webhook secret exists:", !!process.env.STRIPE_WEBHOOK_SECRET);
 
-    try {
-      // Ensure we have the raw body and signature
-      if (!req.body) {
-        throw new Error("Request body is empty");
-      }
+  let event;
 
-      if (!sig) {
-        throw new Error("Stripe signature header is missing");
-      }
-
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
-
-      console.log("Webhook signature verified successfully");
-    } catch (err) {
-      console.error("Webhook signature verification failed:");
-      console.error("- Error message:", err.message);
-      console.error(
-        "- Webhook secret exists:",
-        !!process.env.STRIPE_WEBHOOK_SECRET
-      );
-      console.error(
-        "- Webhook secret length:",
-        process.env.STRIPE_WEBHOOK_SECRET?.length
-      );
-
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+  try {
+    if (!req.body) {
+      throw new Error("Request body is empty");
     }
 
-    try {
-      switch (event.type) {
-        case "checkout.session.completed":
-          console.log(
-            "🎯 [EMAIL DEBUG] Stripe checkout completed - this should trigger email"
-          );
-          console.log("Processing checkout.session.completed event");
-          const sessionId = event.data.object.id;
-          const session = await stripe.checkout.sessions.retrieve(sessionId, {
-            expand: ["customer", "customer_details"],
-          });
-          await handleSuccessfulPayment(session);
-          break;
-
-        case "payment_intent.succeeded":
-          console.log("Payment succeeded:", event.data.object.id);
-          break;
-
-        case "payment_intent.payment_failed":
-          console.log("Processing payment failure");
-          await handleFailedPayment(event.data.object);
-          break;
-
-        default:
-          console.log(`Unhandled event type: ${event.type}`);
-      }
-
-      res.json({ received: true });
-    } catch (processingError) {
-      console.error("Error processing webhook event:", processingError);
-      // Still return 200 to avoid Stripe retries for processing errors
-      res.json({ received: true, error: processingError.message });
+    if (!sig) {
+      throw new Error("Stripe signature header is missing");
     }
+
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+
+    console.log("✅ Webhook signature verified successfully!");
+  } catch (err) {
+    console.error("❌ Webhook signature verification failed:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-);
+
+  try {
+    switch (event.type) {
+      case "checkout.session.completed":
+        console.log("🎯 Processing checkout completion...");
+        const sessionId = event.data.object.id;
+        const session = await stripe.checkout.sessions.retrieve(sessionId, {
+          expand: ["customer", "customer_details"],
+        });
+        await handleSuccessfulPayment(session);
+        break;
+
+      case "payment_intent.succeeded":
+        console.log("Payment succeeded:", event.data.object.id);
+        break;
+
+      case "payment_intent.payment_failed":
+        console.log("Processing payment failure");
+        await handleFailedPayment(event.data.object);
+        break;
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+
+    res.json({ received: true });
+  } catch (processingError) {
+    console.error("Error processing webhook event:", processingError);
+    res.json({ received: true, error: processingError.message });
+  }
+});
 
 // Express middleware for all other routes (must come AFTER webhook)
 app.use(express.static("public"));
@@ -128,8 +110,21 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      } else {
+        console.log("CORS blocked origin:", origin);
+        console.log("Allowed origins:", allowedOrigins);
+        return callback(new Error("Not allowed by CORS"), false);
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
 
@@ -191,8 +186,8 @@ app.post("/create-checkout-session", async (req, res) => {
       mode: "payment",
       submit_type: "auto",
       billing_address_collection: "auto",
-      success_url: `https://license-distribution.trinity-capital.net?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: "https://tcpurchasingserver-production.up.railway.app/error",
+      success_url: `${process.env.BASE_URL}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.BASE_URL}/error`,
       metadata: {
         student_quantity: student_quantity.toString(),
         teacher_quantity: teacher_quantity.toString(),
@@ -1347,21 +1342,38 @@ app.post("/send-quote-email", async (req, res) => {
       },
     });
 
+    // Determine if this is a bulk quote
+    const isBulkQuote =
+      studentQty === "999" && teacherQty === "999" && grandTotal === "$20,000";
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: recipientEmail,
       subject:
         `Quote PDF from Trinity Capital` +
         (schoolName ? ` - ${schoolName}` : ""),
-      text:
-        `Dear ${adminName || "Administrator"},\n\n` +
-        `Please find attached your requested quote.\n\n` +
-        `School: ${schoolName}\nDistrict: ${districtName}\nAddress: ${schoolAddress}\n` +
-        `Student Licenses: ${studentQty} ($${studentTotal})\n` +
-        `Teacher Licenses: ${teacherQty} ($${teacherTotal})\n` +
-        `Total: $${grandTotal}\nQuote ID: ${quoteId}\nQuote Date: ${quoteDate}\n\n` +
-        `Note: W-9 tax form is available upon request.\n\n` +
-        `Thank you for your interest in Trinity Capital.`,
+      text: isBulkQuote
+        ? `Dear ${adminName || "Administrator"},\n\n` +
+          `Please find attached your requested quote for our School-Wide License.\n\n` +
+          `School: ${schoolName}\nDistrict: ${districtName}\nAddress: ${schoolAddress}\n` +
+          `License Type: School-Wide (Unlimited Students & Teachers)\n` +
+          `Total: ${grandTotal}\nQuote ID: ${quoteId}\nQuote Date: ${quoteDate}\n\n` +
+          `The School-Wide License includes:\n` +
+          `• Unlimited student access\n` +
+          `• Unlimited teacher licenses\n` +
+          `• Priority support and training\n` +
+          `• Custom implementation assistance\n` +
+          `• Multi-year discount options available\n\n` +
+          `Note: W-9 tax form is available upon request.\n\n` +
+          `Thank you for your interest in Trinity Capital.`
+        : `Dear ${adminName || "Administrator"},\n\n` +
+          `Please find attached your requested quote.\n\n` +
+          `School: ${schoolName}\nDistrict: ${districtName}\nAddress: ${schoolAddress}\n` +
+          `Student Licenses: ${studentQty} (${studentTotal})\n` +
+          `Teacher Licenses: ${teacherQty} (${teacherTotal})\n` +
+          `Total: ${grandTotal}\nQuote ID: ${quoteId}\nQuote Date: ${quoteDate}\n\n` +
+          `Note: W-9 tax form is available upon request.\n\n` +
+          `Thank you for your interest in Trinity Capital.`,
       attachments: [
         {
           filename: pdfFilename || "Quote.pdf",
