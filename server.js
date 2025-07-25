@@ -24,74 +24,78 @@ const client = new MongoClient(mongoUri, {
   },
 });
 
-// 🚨 EMERGENCY FIX: Create webhook endpoint BEFORE any middleware at all
-// This MUST be the absolute first route registered
-app.use("/purchase", express.raw({ type: "application/json" }));
+// 🚨 CRITICAL FIX: Webhook endpoint with raw body middleware inline
+app.post(
+  "/purchase",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"];
 
-app.post("/purchase", async (req, res) => {
-  const sig = req.headers["stripe-signature"];
-
-  // Enhanced debugging for signature issues
-  console.log("🔍 EMERGENCY WEBHOOK DEBUG:");
-  console.log("- Stripe signature:", sig);
-  console.log("- Body is Buffer:", Buffer.isBuffer(req.body));
-  console.log("- Body type:", typeof req.body);
-  console.log("- Body length:", req.body?.length);
-  console.log("- Webhook secret exists:", !!process.env.STRIPE_WEBHOOK_SECRET);
-
-  let event;
-
-  try {
-    if (!req.body) {
-      throw new Error("Request body is empty");
-    }
-
-    if (!sig) {
-      throw new Error("Stripe signature header is missing");
-    }
-
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
+    // Enhanced debugging for signature issues
+    console.log("🔍 EMERGENCY WEBHOOK DEBUG:");
+    console.log("- Stripe signature:", sig);
+    console.log("- Body is Buffer:", Buffer.isBuffer(req.body));
+    console.log("- Body type:", typeof req.body);
+    console.log("- Body length:", req.body?.length);
+    console.log(
+      "- Webhook secret exists:",
+      !!process.env.STRIPE_WEBHOOK_SECRET
     );
 
-    console.log("✅ Webhook signature verified successfully!");
-  } catch (err) {
-    console.error("❌ Webhook signature verification failed:", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+    let event;
 
-  try {
-    switch (event.type) {
-      case "checkout.session.completed":
-        console.log("🎯 Processing checkout completion...");
-        const sessionId = event.data.object.id;
-        const session = await stripe.checkout.sessions.retrieve(sessionId, {
-          expand: ["customer", "customer_details"],
-        });
-        await handleSuccessfulPayment(session);
-        break;
+    try {
+      if (!req.body) {
+        throw new Error("Request body is empty");
+      }
 
-      case "payment_intent.succeeded":
-        console.log("Payment succeeded:", event.data.object.id);
-        break;
+      if (!sig) {
+        throw new Error("Stripe signature header is missing");
+      }
 
-      case "payment_intent.payment_failed":
-        console.log("Processing payment failure");
-        await handleFailedPayment(event.data.object);
-        break;
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
 
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+      console.log("✅ Webhook signature verified successfully!");
+    } catch (err) {
+      console.error("❌ Webhook signature verification failed:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    res.json({ received: true });
-  } catch (processingError) {
-    console.error("Error processing webhook event:", processingError);
-    res.json({ received: true, error: processingError.message });
+    try {
+      switch (event.type) {
+        case "checkout.session.completed":
+          console.log("🎯 Processing checkout completion...");
+          const sessionId = event.data.object.id;
+          const session = await stripe.checkout.sessions.retrieve(sessionId, {
+            expand: ["customer", "customer_details"],
+          });
+          await handleSuccessfulPayment(session);
+          break;
+
+        case "payment_intent.succeeded":
+          console.log("Payment succeeded:", event.data.object.id);
+          break;
+
+        case "payment_intent.payment_failed":
+          console.log("Processing payment failure");
+          await handleFailedPayment(event.data.object);
+          break;
+
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+
+      res.json({ received: true });
+    } catch (processingError) {
+      console.error("Error processing webhook event:", processingError);
+      res.json({ received: true, error: processingError.message });
+    }
   }
-});
+);
 
 // Express middleware for all other routes (must come AFTER webhook)
 app.use(express.static("public"));
