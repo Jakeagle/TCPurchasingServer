@@ -242,6 +242,149 @@ app.post("/request-quote", async (req, res) => {
   }
 });
 
+// Free Trial Signup Endpoint
+app.post("/create-free-trial", async (req, res) => {
+  try {
+    const {
+      admin_name,
+      admin_email,
+      school_name,
+      district_name,
+      teacher_quantity,
+      student_quantity,
+    } = req.body;
+
+    // Validation
+    if (!admin_name || !admin_email || !school_name || !district_name) {
+      return res.status(400).json({
+        error: "All fields are required for free trial signup",
+      });
+    }
+
+    if (teacher_quantity <= 0) {
+      return res.status(400).json({
+        error: "At least 1 teacher is required for free trial",
+      });
+    }
+
+    if (student_quantity <= 0) {
+      return res.status(400).json({
+        error: "At least 1 student is required for free trial",
+      });
+    }
+
+    // Check if school already has an active trial or paid license
+    const existingTrial = await client
+      .db("TrinityCapital")
+      .collection("Free Trials")
+      .findOne({
+        admin_email: admin_email,
+        is_active: true,
+      });
+
+    const existingLicense = await client
+      .db("TrinityCapital")
+      .collection("School Licenses")
+      .findOne({
+        admin_email: admin_email,
+        is_active: true,
+      });
+
+    if (existingTrial) {
+      return res.status(400).json({
+        error: "This email already has an active free trial",
+      });
+    }
+
+    if (existingLicense) {
+      return res.status(400).json({
+        error:
+          "This email already has an active license. Free trial not available.",
+      });
+    }
+
+    // Create trial record
+    const trialRecord = {
+      school_name,
+      district_name,
+      admin_email,
+      admin_name,
+      teacher_licenses: parseInt(teacher_quantity),
+      student_licenses: parseInt(student_quantity),
+      trial_start_date: new Date(),
+      trial_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      is_active: true,
+      license_type: "trial",
+      created_at: new Date(),
+    };
+
+    const result = await client
+      .db("TrinityCapital")
+      .collection("Free Trials")
+      .insertOne(trialRecord);
+
+    console.log("✅ Free trial created:", result.insertedId);
+
+    // Also create a license record in School Licenses collection for admin dashboard compatibility
+    const licenseRecord = {
+      school_name,
+      district_name,
+      admin_email,
+      admin_name,
+      student_licenses: parseInt(student_quantity),
+      teacher_licenses: parseInt(teacher_quantity),
+      stripe_session_id: null, // No Stripe session for trials
+      stripe_customer_id: null, // No Stripe customer for trials
+      payment_status: "trial", // Mark as trial instead of completed
+      amount_paid: 0, // Free trial
+      currency: "usd",
+      purchase_date: new Date(),
+      license_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      is_active: true,
+      license_type: "trial", // Mark this as a trial license
+      trial_id: result.insertedId, // Reference to the trial record
+    };
+
+    await client
+      .db("TrinityCapital")
+      .collection("School Licenses")
+      .insertOne(licenseRecord);
+
+    console.log(
+      "✅ Trial license record created in School Licenses collection"
+    );
+
+    // Generate teacher access codes for the trial
+    await generateTrialAccessCodes(
+      school_name,
+      admin_name,
+      teacher_quantity,
+      student_quantity,
+      result.insertedId
+    );
+
+    // Send trial confirmation email
+    await sendTrialConfirmationEmail(
+      admin_email,
+      admin_name,
+      school_name,
+      teacher_quantity,
+      student_quantity
+    );
+
+    // Return success with redirect URL to license distribution
+    res.json({
+      success: true,
+      message: "Free trial created successfully",
+      redirect_url: `https://license-distribution.trinity-capital.net?email=${encodeURIComponent(admin_email)}&trial=true`,
+      trial_id: result.insertedId,
+    });
+  } catch (error) {
+    console.error("Error creating free trial:", error);
+    res.status(500).json({ error: "Failed to create free trial" });
+  }
+});
+
 app.get("/checkout-session/:session_id", async (req, res) => {
   try {
     const { session_id } = req.params;
@@ -513,6 +656,7 @@ async function generateAccessCodes(
         used: false,
         created_at: new Date(),
         expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        license_type: "paid",
       });
     }
 
@@ -529,6 +673,49 @@ async function generateAccessCodes(
     return accessCodes;
   } catch (error) {
     console.error("Error generating access codes:", error);
+    throw error;
+  }
+}
+
+// Generate trial access codes - similar to paid but with trial expiration
+async function generateTrialAccessCodes(
+  schoolName,
+  adminName,
+  teacherCount,
+  studentCount,
+  trialId
+) {
+  try {
+    const accessCodes = [];
+
+    // Generate individual teacher codes for trial account creation
+    for (let i = 0; i < teacherCount; i++) {
+      accessCodes.push({
+        code: crypto.randomBytes(4).toString("hex").toUpperCase(),
+        type: "teacher",
+        school: schoolName,
+        admin: adminName,
+        used: false,
+        created_at: new Date(),
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        license_type: "trial",
+        trial_id: trialId,
+      });
+    }
+
+    if (accessCodes.length > 0) {
+      await client
+        .db("TrinityCapital")
+        .collection("Access Codes")
+        .insertMany(accessCodes);
+    }
+
+    console.log(
+      `Generated ${teacherCount} trial teacher access codes for ${schoolName}`
+    );
+    return accessCodes;
+  } catch (error) {
+    console.error("Error generating trial access codes:", error);
     throw error;
   }
 }
@@ -562,6 +749,9 @@ app.post("/validate-teacher-code", async (req, res) => {
       school: teacherCode.school,
       type: "teacher",
       code_id: teacherCode._id,
+      license_type: teacherCode.license_type || "paid",
+      expires_at: teacherCode.expires_at,
+      trial_id: teacherCode.trial_id || null,
     });
   } catch (error) {
     console.error("Error validating teacher code:", error);
@@ -708,6 +898,75 @@ async function sendLicenseConfirmationEmail(
   }
 }
 
+// Send trial confirmation email
+async function sendTrialConfirmationEmail(
+  adminEmail,
+  adminName,
+  schoolName,
+  teacherCount,
+  studentCount
+) {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: adminEmail,
+      subject: `Trinity Capital - Free Trial Activated for ${schoolName}`,
+      html: `
+        <h2>🎉 Free Trial Activated!</h2>
+        <p>Dear ${adminName},</p>
+        <p>Congratulations! Your Trinity Capital free trial has been successfully activated.</p>
+        
+        <h3>Trial Details:</h3>
+        <ul>
+          <li><strong>School:</strong> ${schoolName}</li>
+          <li><strong>Teacher Licenses:</strong> ${teacherCount}</li>
+          <li><strong>Student Licenses:</strong> ${studentCount}</li>
+          <li><strong>Trial Duration:</strong> 30 days</li>
+          <li><strong>Trial Start Date:</strong> ${new Date().toLocaleDateString()}</li>
+          <li><strong>Trial End Date:</strong> ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</li>
+        </ul>
+        
+        <h3>Next Steps:</h3>
+        <p>1. <strong>Distribute Teacher Codes:</strong> Visit your admin dashboard to send access codes to your teachers</p>
+        <p>2. <strong>Teacher Setup:</strong> Teachers will use their codes to create accounts and generate student access codes</p>
+        <p>3. <strong>Start Learning:</strong> Students can begin using Trinity Capital immediately</p>
+        
+        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <h4>⚠️ Important Trial Information:</h4>
+          <ul>
+            <li>Your trial expires in <strong>30 days</strong></li>
+            <li>All accounts created during the trial will have 30-day access</li>
+            <li>To continue using Trinity Capital after the trial, you'll need to purchase licenses</li>
+          </ul>
+        </div>
+        
+        <p>Ready to get started? <a href="https://license-distribution.trinity-capital.net?email=${encodeURIComponent(adminEmail)}&trial=true" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Access Your Dashboard</a></p>
+        
+        <p>If you have any questions, please don't hesitate to contact our support team.</p>
+        
+        <p>Best regards,<br>The Trinity Capital Team</p>
+      `,
+    });
+
+    console.log(`Trial confirmation email sent to ${adminEmail}`);
+  } catch (error) {
+    console.error("Error sending trial confirmation email:", error);
+  }
+}
+
 // License Management Endpoints
 app.get("/school-licenses/:admin_email", async (req, res) => {
   try {
@@ -798,16 +1057,66 @@ app.get("/admin-portal/:admin_email", async (req, res) => {
   try {
     const { admin_email } = req.params;
 
-    // Get the admin's school license
-    const license = await client
+    // Check for paid license first
+    let license = await client
       .db("TrinityCapital")
       .collection("School Licenses")
       .findOne({ admin_email: admin_email, is_active: true });
 
-    if (!license) {
+    let licenseType = "paid";
+    let schoolName, districtName, adminName, teacherLicenses, studentLicenses;
+    let purchaseDate, licenseExpiry, trialEndDate, daysRemaining;
+
+    if (license) {
+      // Check if this is a trial license and if it has expired
+      if (license.license_type === "trial") {
+        const now = new Date();
+        const trialEnd = new Date(license.license_expiry);
+
+        if (now > trialEnd) {
+          // Trial has expired, mark both records as inactive
+          await client
+            .db("TrinityCapital")
+            .collection("School Licenses")
+            .updateOne({ _id: license._id }, { $set: { is_active: false } });
+
+          if (license.trial_id) {
+            await client
+              .db("TrinityCapital")
+              .collection("Free Trials")
+              .updateOne(
+                { _id: new ObjectId(license.trial_id) },
+                { $set: { is_active: false } }
+              );
+          }
+
+          return res.status(403).json({
+            error: "Trial has expired",
+            expired: true,
+            trial_end_date: trialEnd,
+          });
+        }
+
+        // Trial is still active
+        licenseType = "trial";
+        trialEndDate = license.license_expiry;
+        daysRemaining = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
+      } else {
+        licenseType = "paid";
+        purchaseDate = license.purchase_date;
+        licenseExpiry = license.license_expiry;
+      }
+
+      schoolName = license.school_name;
+      districtName = license.district_name;
+      adminName = license.admin_name;
+      teacherLicenses = license.teacher_licenses;
+      studentLicenses = license.student_licenses;
+    } else {
+      // No active license found in School Licenses collection
       return res
         .status(404)
-        .json({ error: "No active license found for this admin" });
+        .json({ error: "No active license or trial found for this admin" });
     }
 
     // Get unused teacher codes for this school
@@ -815,7 +1124,7 @@ app.get("/admin-portal/:admin_email", async (req, res) => {
       .db("TrinityCapital")
       .collection("Access Codes")
       .find({
-        school: license.school_name,
+        school: schoolName,
         type: "teacher",
         used: false,
       })
@@ -826,24 +1135,34 @@ app.get("/admin-portal/:admin_email", async (req, res) => {
       .db("TrinityCapital")
       .collection("Access Codes")
       .find({
-        school: license.school_name,
+        school: schoolName,
         type: "teacher",
         used: true,
       })
       .toArray();
 
-    res.json({
-      school_name: license.school_name,
-      district_name: license.district_name,
-      admin_name: license.admin_name,
-      teacher_licenses: license.teacher_licenses,
-      student_licenses: license.student_licenses,
+    const response = {
+      license_type: licenseType,
+      school_name: schoolName,
+      district_name: districtName,
+      admin_name: adminName,
+      teacher_licenses: teacherLicenses,
+      student_licenses: studentLicenses,
       unused_codes: unusedCodes,
       used_codes: usedCodes,
       codes_remaining: unusedCodes.length,
-      purchase_date: license.purchase_date,
-      license_expiry: license.license_expiry,
-    });
+    };
+
+    // Add license-specific fields
+    if (licenseType === "paid") {
+      response.purchase_date = purchaseDate;
+      response.license_expiry = licenseExpiry;
+    } else {
+      response.trial_end_date = trialEndDate;
+      response.days_remaining = daysRemaining;
+    }
+
+    res.json(response);
   } catch (error) {
     console.error("Error fetching admin portal data:", error);
     res.status(500).json({ error: error.message });
@@ -1131,6 +1450,7 @@ app.post("/validate-admin", async (req, res) => {
   try {
     const { admin_email } = req.body;
 
+    // Check for license (both paid and trial are now in School Licenses collection)
     const license = await client
       .db("TrinityCapital")
       .collection("School Licenses")
@@ -1138,21 +1458,136 @@ app.post("/validate-admin", async (req, res) => {
 
     if (!license) {
       return res.status(404).json({
-        error: "No active license found for this email address",
+        error: "No active license or trial found for this email address",
         valid: false,
       });
     }
 
-    res.json({
+    // Check if it's a trial license and if it has expired
+    if (license.license_type === "trial") {
+      const now = new Date();
+      const trialEnd = new Date(license.license_expiry);
+
+      if (now > trialEnd) {
+        // Trial has expired, mark both records as inactive
+        await client
+          .db("TrinityCapital")
+          .collection("School Licenses")
+          .updateOne({ _id: license._id }, { $set: { is_active: false } });
+
+        if (license.trial_id) {
+          await client
+            .db("TrinityCapital")
+            .collection("Free Trials")
+            .updateOne(
+              { _id: new ObjectId(license.trial_id) },
+              { $set: { is_active: false } }
+            );
+        }
+
+        return res.status(403).json({
+          error: "Trial has expired",
+          valid: false,
+          expired: true,
+          trial_end_date: trialEnd,
+        });
+      }
+
+      // Trial is still active
+      return res.json({
+        valid: true,
+        license_type: "trial",
+        school_name: license.school_name,
+        district_name: license.district_name,
+        admin_name: license.admin_name,
+        teacher_licenses: license.teacher_licenses,
+        student_licenses: license.student_licenses,
+        trial_end_date: license.license_expiry,
+        days_remaining: Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24)),
+      });
+    }
+
+    // Paid license
+    return res.json({
       valid: true,
+      license_type: "paid",
       school_name: license.school_name,
       district_name: license.district_name,
       admin_name: license.admin_name,
       teacher_licenses: license.teacher_licenses,
       student_licenses: license.student_licenses,
+      purchase_date: license.purchase_date,
+      license_expiry: license.license_expiry,
     });
   } catch (error) {
     console.error("Error validating admin:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Validate user access (for app login validation)
+app.post("/validate-user-access", async (req, res) => {
+  try {
+    const { user_email, user_type } = req.body; // user_type: "teacher" or "student"
+
+    // For trial users, check if their trial has expired
+    // This assumes users store their trial_id or school info in their profile
+    const user = await client
+      .db("TrinityCapital")
+      .collection("Users") // Adjust collection name as needed
+      .findOne({ email: user_email });
+
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found",
+        valid: false,
+      });
+    }
+
+    // If user is associated with a trial
+    if (user.license_type === "trial" && user.trial_id) {
+      const trial = await client
+        .db("TrinityCapital")
+        .collection("Free Trials")
+        .findOne({ _id: new ObjectId(user.trial_id) });
+
+      if (!trial) {
+        return res.status(404).json({
+          error: "Associated trial not found",
+          valid: false,
+        });
+      }
+
+      const now = new Date();
+      const trialEnd = new Date(trial.trial_end_date);
+
+      if (now > trialEnd) {
+        return res.status(403).json({
+          error: "Trial access has expired",
+          valid: false,
+          expired: true,
+          trial_end_date: trialEnd,
+          message:
+            "Your 30-day trial has expired. Please contact your administrator to purchase a full license.",
+        });
+      }
+
+      return res.json({
+        valid: true,
+        license_type: "trial",
+        trial_end_date: trialEnd,
+        days_remaining: Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24)),
+        school_name: trial.school_name,
+      });
+    }
+
+    // If user has paid license, they have full access
+    return res.json({
+      valid: true,
+      license_type: "paid",
+    });
+  } catch (error) {
+    console.error("Error validating user access:", error);
     res.status(500).json({ error: error.message });
   }
 });
