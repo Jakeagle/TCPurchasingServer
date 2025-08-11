@@ -273,59 +273,24 @@ app.post("/create-free-trial", async (req, res) => {
       });
     }
 
-    // Check if school already has an active trial or paid license
-    const existingTrial = await client
-      .db("TrinityCapital")
-      .collection("Free Trials")
-      .findOne({
-        admin_email: admin_email,
-        is_active: true,
-      });
-
-    const existingLicense = await client
+    // Check if school already has an active trial license
+    const existingTrialLicense = await client
       .db("TrinityCapital")
       .collection("School Licenses")
       .findOne({
         admin_email: admin_email,
         is_active: true,
+        license_type: "trial",
       });
 
-    if (existingTrial) {
-      return res.status(400).json({
-        error: "This email already has an active free trial",
-      });
-    }
-
-    if (existingLicense) {
+    if (existingTrialLicense) {
       return res.status(400).json({
         error:
-          "This email already has an active license. Free trial not available.",
+          "This email already has an active trial license. Please wait for the current trial to expire.",
       });
     }
 
-    // Create trial record
-    const trialRecord = {
-      school_name,
-      district_name,
-      admin_email,
-      admin_name,
-      teacher_licenses: parseInt(teacher_quantity),
-      student_licenses: parseInt(student_quantity),
-      trial_start_date: new Date(),
-      trial_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-      is_active: true,
-      license_type: "trial",
-      created_at: new Date(),
-    };
-
-    const result = await client
-      .db("TrinityCapital")
-      .collection("Free Trials")
-      .insertOne(trialRecord);
-
-    console.log("✅ Free trial created:", result.insertedId);
-
-    // Also create a license record in School Licenses collection for admin dashboard compatibility
+    // Create trial record in School Licenses collection
     const licenseRecord = {
       school_name,
       district_name,
@@ -342,10 +307,9 @@ app.post("/create-free-trial", async (req, res) => {
       license_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       is_active: true,
       license_type: "trial", // Mark this as a trial license
-      trial_id: result.insertedId, // Reference to the trial record
     };
 
-    await client
+    const result = await client
       .db("TrinityCapital")
       .collection("School Licenses")
       .insertOne(licenseRecord);
